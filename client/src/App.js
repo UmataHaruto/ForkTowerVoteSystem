@@ -8,7 +8,9 @@ function App() {
   const [votes, setVotes] = useState({});
 
   useEffect(() => {
-    socket.on('update', setVotes);
+    socket.on('update', (data) => {
+      setVotes(data);
+    });
     return () => socket.off('update');
   }, []);
 
@@ -38,7 +40,7 @@ function App() {
               >
                 項目{i}
               </button>
-              <span> 現在: {votes[i]?.join(', ') || 'なし'}</span>
+              <span> 投票者: {votes[i]?.join(', ') || 'なし'}</span>
             </div>
           ))}
           <button onClick={handleReset}>リセット</button>
