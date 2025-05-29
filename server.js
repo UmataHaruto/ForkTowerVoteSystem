@@ -9,7 +9,7 @@ app.use(cors());
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: '*' } });
 
-const NUM_ITEMS = 16;
+const NUM_ITEMS = 24; // 項目数に合わせて調整
 let voteData = {};
 let allParticipants = new Set();
 let submissions = {};
@@ -77,27 +77,54 @@ io.on('connection', (socket) => {
   });
 });
 
-// 仮のマッチング結果生成（スプレッドシート未参照）
 function generateMockMatchResults(names) {
   const roles = ["T1", "H1", "H2", "D1", "D2", "D3", "D4", "D5"];
-  const parties = ["A", "B", "C"];
+  const parties = ["A", "B", "C", "1", "2", "3"];
   const result = {};
   const unassigned = [...names];
 
+  const leaders = {
+    "A": "Aリーダー",
+    "B": "Bリーダー",
+    "C": "Cリーダー",
+    "1": "1リーダー",
+    "2": "2リーダー",
+    "3": "3リーダー"
+  };
+
   for (const p of parties) {
-    for (let i = 1; i <= 2; i++) {
-      const tag = `${p}${i}`;
-      result[tag] = {};
-      for (const r of roles) {
+    result[p] = {};
+    for (const r of roles) {
+      result[p][r] = null;
+    }
+  }
+
+  // リーダーを強制的にT1に割り当て
+  Object.entries(leaders).forEach(([key, label]) => {
+    const candidates = voteData[getItemIndex(label)] || [];
+    if (candidates.length > 0) {
+      const chosen = candidates[Math.floor(Math.random() * candidates.length)];
+      result[key]["T1"] = chosen;
+      const i = unassigned.indexOf(chosen);
+      if (i !== -1) unassigned.splice(i, 1);
+    }
+  });
+
+  // 残りを割り当て
+  for (const p of parties) {
+    for (const r of roles) {
+      if (!result[p][r]) {
         const name = unassigned.shift();
-        result[tag][r] = name || null;
+        result[p][r] = name || null;
       }
     }
   }
-  if (unassigned.length) {
+
+  if (unassigned.length > 0) {
     result["未割当"] = {};
     unassigned.forEach((n, i) => result["未割当"][`余り${i+1}`] = n);
   }
+
   return result;
 }
 
@@ -118,7 +145,15 @@ function getItemIndex(label) {
     "詩人Lv4↑",
     "タンク",
     "ヒーラー",
-    "DPS"
+    "DPS",
+    "シーフLv4↑(ジョブDPS)",
+    "シーフLv4↑",
+    "Aリーダー",
+    "Bリーダー",
+    "Cリーダー",
+    "1リーダー",
+    "2リーダー",
+    "3リーダー"
   ];
   return labels.indexOf(label);
 }
