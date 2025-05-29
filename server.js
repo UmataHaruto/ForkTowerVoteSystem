@@ -1,44 +1,25 @@
-const express = require('express');
-const { Server } = require('socket.io');
-const http = require('http');
-const cors = require('cors');
+let voteData = {};
+for (let i = 0; i < 11; i++) {
+  voteData[i] = [];
+}
 
-const app = express();
-app.use(cors());
-
-const server = http.createServer(app);
-const io = new Server(server, {
-  cors: { origin: '*' }
-});
-
-let voteData = {
-  1: [],
-  2: [],
-  3: [],
-  4: [],
-  5: []
-};
-
-let allParticipants = new Set(); // ← 追加
+let allParticipants = new Set();
 
 io.on('connection', (socket) => {
-  console.log('👤 新しい接続:', socket.id);
   socket.emit('update', {
     voteData,
     allParticipants: Array.from(allParticipants)
   });
 
   socket.on('vote', ({ name, item }) => {
-    const isLimited = item === 1 || item === 2;
-    if (isLimited && voteData[item].length >= 2 && !voteData[item].includes(name)) return;
+    if (!(item in voteData)) return;
 
-    // 他の項目からこの名前を削除
+    // 参加者登録
     for (const key in voteData) {
       voteData[key] = voteData[key].filter(n => n !== name);
     }
-
     voteData[item].push(name);
-    allParticipants.add(name); // ← 追加
+    allParticipants.add(name);
 
     io.emit('update', {
       voteData,
@@ -47,15 +28,14 @@ io.on('connection', (socket) => {
   });
 
   socket.on('reset', () => {
-    voteData = { 1: [], 2: [], 3: [], 4: [], 5: [] };
-    allParticipants = new Set(); // ← 追加
+    voteData = {};
+    for (let i = 0; i < 11; i++) {
+      voteData[i] = [];
+    }
+    allParticipants = new Set();
     io.emit('update', {
       voteData,
       allParticipants: []
     });
   });
-});
-
-server.listen(4000, () => {
-  console.log('✅ サーバー起動 (port 4000)');
 });
