@@ -19,8 +19,17 @@ const items = [
   "詩人Lv4↑",
   "タンク",
   "ヒーラー",
-  "DPS"
+  "DPS",
+  "シーフLv4↑(ジョブDPS)",
+  "シーフLv4↑",
+  "Aリーダー",
+  "Bリーダー",
+  "Cリーダー",
+  "1リーダー",
+  "2リーダー",
+  "3リーダー"
 ];
+
 
 function App() {
   const [name, setName] = useState('');
