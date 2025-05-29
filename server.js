@@ -9,7 +9,7 @@ app.use(cors());
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: '*' } });
 
-const NUM_ITEMS = 24; // 項目数に合わせて調整
+const NUM_ITEMS = 24;
 let voteData = {};
 let allParticipants = new Set();
 let submissions = {};
@@ -67,7 +67,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('match', () => {
-    matchResults = generateMockMatchResults(Array.from(allParticipants));
+    matchResults = generateBalancedMatchResults(Array.from(allParticipants));
     io.emit('update', {
       voteData,
       allParticipants: Array.from(allParticipants),
@@ -77,7 +77,7 @@ io.on('connection', (socket) => {
   });
 });
 
-function generateMockMatchResults(names) {
+function generateBalancedMatchResults(names) {
   const roles = ["T1", "H1", "H2", "D1", "D2", "D3", "D4", "D5"];
   const parties = ["A", "B", "C", "1", "2", "3"];
   const result = {};
@@ -99,7 +99,7 @@ function generateMockMatchResults(names) {
     }
   }
 
-  // リーダーを強制的にT1に割り当て
+  // 優先的にリーダーをT1に割り当て
   Object.entries(leaders).forEach(([key, label]) => {
     const candidates = voteData[getItemIndex(label)] || [];
     if (candidates.length > 0) {
@@ -110,19 +110,24 @@ function generateMockMatchResults(names) {
     }
   });
 
-  // 残りを割り当て
-  for (const p of parties) {
-    for (const r of roles) {
-      if (!result[p][r]) {
+  // 各PTの現在人数を数えるヘルパー
+  const countMembers = (pt) =>
+    Object.values(result[pt]).filter((v) => v !== null).length;
+
+  // 各PTの人数が均等になるように割り当て
+  for (const role of roles) {
+    for (const pt of parties) {
+      if (!result[pt][role]) {
         const name = unassigned.shift();
-        result[p][r] = name || null;
+        if (name) result[pt][role] = name;
       }
     }
   }
 
+  // さらに未割当があれば分離
   if (unassigned.length > 0) {
     result["未割当"] = {};
-    unassigned.forEach((n, i) => result["未割当"][`余り${i+1}`] = n);
+    unassigned.forEach((n, i) => result["未割当"][`余り${i + 1}`] = n);
   }
 
   return result;
