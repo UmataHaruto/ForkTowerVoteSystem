@@ -1,0 +1,65 @@
+
+body {
+  font-family: sans-serif;
+  background: #f9f9f9;
+  margin: 0;
+  padding: 1rem;
+}
+
+.container {
+  max-width: 600px;
+  margin: auto;
+}
+
+.entry input {
+  padding: 0.5rem;
+  font-size: 1rem;
+}
+
+.entry button {
+  margin-left: 1rem;
+  padding: 0.5rem 1rem;
+}
+
+.vote-area {
+  background: #fff;
+  padding: 1rem;
+  border-radius: 8px;
+  box-shadow: 0 0 5px rgba(0,0,0,0.1);
+}
+
+.vote-item {
+  margin-bottom: 1rem;
+}
+
+.vote-item button {
+  margin-right: 1rem;
+}
+
+.reset-button {
+  margin-top: 1rem;
+  padding: 0.5rem 1rem;
+  background: #f44336;
+  color: white;
+  border: none;
+  border-radius: 4px;
+}
+
+.participants {
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid #ddd;
+}
+
+.participants ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.participants li {
+  background: #eee;
+  margin: 4px 0;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
