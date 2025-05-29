@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { socket } from './socket';
 import './App.css';
 
@@ -30,112 +30,97 @@ const items = [
   "3リーダー"
 ];
 
-
 function App() {
   const [name, setName] = useState('');
-  const [entered, setEntered] = useState(false);
   const [selected, setSelected] = useState([]);
-  const [votes, setVotes] = useState({});
-  const [participants, setParticipants] = useState([]);
+  const [voteData, setVoteData] = useState({});
   const [submissions, setSubmissions] = useState({});
   const [matchResults, setMatchResults] = useState(null);
+  const [showVote, setShowVote] = useState(false);
 
-  const isAdmin = name.toLowerCase().includes("kurapon");
+  const isAdmin = name.includes("kurapon");
 
   useEffect(() => {
-    socket.on('update', (data) => {
-      setVotes(data.voteData || {});
-      setParticipants(data.allParticipants || []);
+    socket.on("update", (data) => {
+      setVoteData(data.voteData);
       setSubmissions(data.submissions || {});
       setMatchResults(data.matchResults || null);
     });
-    return () => socket.off('update');
   }, []);
 
   const handleSend = () => {
-    socket.emit('vote', { name, items: selected });
+    socket.emit("vote", { name, items: selected });
+    setShowVote(true);
   };
 
   const handleReset = () => {
-    socket.emit('reset');
+    socket.emit("reset");
   };
 
   const handleMatch = () => {
-    socket.emit('match');
-  };
-
-  const toggleSelect = (item) => {
-    setSelected(prev =>
-      prev.includes(item) ? prev.filter(i => i !== item) : [...prev, item]
-    );
+    socket.emit("match");
   };
 
   return (
-    <div className="container">
-      {!entered ? (
-        <div className="entry">
-          <input
-            placeholder="名前を入力"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
-          <button onClick={() => setEntered(true)}>参加</button>
+    <div className="App">
+      {!showVote ? (
+        <div>
+          <h2>名前を入力してください</h2>
+          <input value={name} onChange={(e) => setName(e.target.value)} />
+          <button onClick={() => setShowVote(true)}>参加</button>
         </div>
       ) : (
-        <div className="vote-area">
-          <h2>{isAdmin ? "管理者モード" : `${name}さん、ロールを選んでください`}</h2>
-
-          <div className="options">
+        <div>
+          <h2>{name} さん、参加ありがとうございます！</h2>
+          <div className="grid">
             {items.map((item, idx) => (
               <label key={idx}>
                 <input
                   type="checkbox"
                   checked={selected.includes(item)}
-                  onChange={() => toggleSelect(item)}
+                  onChange={() => {
+                    if (selected.includes(item)) {
+                      setSelected(selected.filter(i => i !== item));
+                    } else {
+                      setSelected([...selected, item]);
+                    }
+                  }}
                 />
                 {item}
               </label>
             ))}
           </div>
-
           <button onClick={handleSend}>送信</button>
 
           {isAdmin && (
             <>
               <button onClick={handleReset}>リセット</button>
               <button onClick={handleMatch}>マッチング</button>
-
-              <div className="submissions">
-                <h3>送信済みユーザー:</h3>
-                <ul>
-                  {Object.keys(submissions).map((user, i) => (
-                    <li key={i}>{user}: {submissions[user].join(", ")}</li>
-                  ))}
-                </ul>
-              </div>
+              <h3>送信者一覧</h3>
+              <ul>
+                {Object.keys(submissions).map((n, i) => (
+                  <li key={i}>{n}</li>
+                ))}
+              </ul>
             </>
           )}
 
-          <div className="participants">
-            <h3>参加者一覧</h3>
-            <ul>
-              {participants.map((p, i) => (
-                <li key={i}>{p}</li>
-              ))}
-            </ul>
-          </div>
-
           {matchResults && (
-            <div className="results">
+            <div>
               <h3>マッチング結果</h3>
-              {Object.entries(matchResults).map(([party, roles], i) => (
-                <div key={i}>
-                  <h4>パーティ {party}</h4>
-                  <ul>
-                    {Object.entries(roles).map(([role, member], j) => (
-                      <li key={j}>{role}: {member || "未割当"}</li>
-                    ))}
-                  </ul>
+              {Object.keys(matchResults).map((party) => (
+                <div key={party}>
+                  <h4>{party}</h4>
+                  <table>
+                    <tbody>
+                      {Object.entries(matchResults[party]).map(([role, player]) => (
+                        <tr key={role}>
+                          <td>{role}</td>
+                          <td>{player}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               ))}
             </div>
